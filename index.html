@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Explorer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      color: white;
+    }
+    .search-container {
+      display: flex;
+      gap: 10px;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    .search-input, select {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+    }
+    .search-btn, .voice-btn, .dark-btn {
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: none;
+      background: #ff6b6b;
+      color: white;
+      cursor: pointer;
+    }
+    .books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .book-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .book-cover {
+      width: 100px;
+      height: 140px;
+      float: left;
+      margin-right: 10px;
+      object-fit: cover;
+    }
+    .book-info {
+      overflow: hidden;
+    }
+    .favorite {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: red;
+      cursor: pointer;
+    }
+    .dark-mode {
+      background: #121212;
+      color: #eee;
+    }
+    .dark-mode .book-card {
+      background: #1e1e1e;
+      color: #eee;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 600px;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📚 Book Explorer</h1>
+      <p>Discover amazing books from around the world</p>
+      <button class="dark-btn" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
+    </div>
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search books..." />
+      <button class="search-btn" onclick="searchBooks()">🔍</button>
+      <button class="voice-btn" onclick="startVoiceSearch()">🎤</button>
+    </div>
+    <select id="sortOption" onchange="sortBooks()">
+      <option value="">Sort By</option>
+      <option value="rating">Rating</option>
+      <option value="pages">Pages</option>
+      <option value="date">Newest</option>
+    </select>
+    <div id="booksContainer" class="books-grid"></div>
+  </div>
+
+  <div id="bookModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" id="modalContent">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = 'AIzaSyD8vtLoFuIzGsU72pGpt7IHNym05H621bM';
+    const BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
+    let currentBooks = [];
+
+    async function searchBooks() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) return;
+      const res = await fetch(`${BASE_URL}?q=${encodeURIComponent(query)}&maxResults=20&key=${API_KEY}`);
+      const data = await res.json();
+      currentBooks = data.items || [];
+      displayBooks(currentBooks);
+    }
+
+    function displayBooks(books) {
+      const container = document.getElementById('booksContainer');
+      container.innerHTML = '';
+      books.forEach((book, index) => {
+        const info = book.volumeInfo;
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+          <img src="${info.imageLinks?.thumbnail || ''}" class="book-cover" />
+          <div class="book-info">
+            <h3>${info.title}</h3>
+            <p><em>${info.authors?.join(', ') || 'Unknown'}</em></p>
+            <p>${info.description?.substring(0, 100) || 'No description'}...</p>
+            <small>Rating: ${info.averageRating || 'N/A'}</small>
+          </div>
+          <button class="favorite" onclick="event.stopPropagation(); toggleFavorite('${book.id}')">
+            ${isFavorite(book.id) ? '❤️' : '🤍'}
+          </button>
+        `;
+        card.onclick = () => openModal(index);
+        container.appendChild(card);
+      });
+    }
+
+    function sortBooks() {
+      const opt = document.getElementById('sortOption').value;
+      if (opt === 'rating') currentBooks.sort((a, b) => (b.volumeInfo.averageRating || 0) - (a.volumeInfo.averageRating || 0));
+      if (opt === 'pages') currentBooks.sort((a, b) => (b.volumeInfo.pageCount || 0) - (a.volumeInfo.pageCount || 0));
+      if (opt === 'date') currentBooks.sort((a, b) => new Date(b.volumeInfo.publishedDate || 0) - new Date(a.volumeInfo.publishedDate || 0));
+      displayBooks(currentBooks);
+    }
+
+    function toggleFavorite(id) {
+      let favs = JSON.parse(localStorage.getItem('favorites')) || [];
+      if (favs.includes(id)) favs = favs.filter(f => f !== id);
+      else favs.push(id);
+      localStorage.setItem('favorites', JSON.stringify(favs));
+      displayBooks(currentBooks);
+    }
+
+    function isFavorite(id) {
+      let favs = JSON.parse(localStorage.getItem('favorites')) || [];
+      return favs.includes(id);
+    }
+
+    function openModal(index) {
+      const info = currentBooks[index].volumeInfo;
+      document.getElementById('modalContent').innerHTML += `
+        <h2>${info.title}</h2>
+        <p><em>${info.authors?.join(', ')}</em></p>
+        <p>${info.description}</p>
+        <button onclick="downloadBookInfo('${info.title}', '${info.description?.substring(0, 100)}')">📥 Download Info</button>
+        <button onclick="readDescription()">🔈 Read Description</button>
+      `;
+      document.getElementById('bookModal').style.display = 'flex';
+    }
+
+    function closeModal(e) {
+      const modal = document.getElementById('bookModal');
+      if (!e || e.target === modal) {
+        modal.style.display = 'none';
+        document.getElementById('modalContent').innerHTML = '<button class="close-btn" onclick="closeModal()">&times;</button>';
+      }
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function startVoiceSearch() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.start();
+      recognition.onresult = function(e) {
+        document.getElementById('searchInput').value = e.results[0][0].transcript;
+        searchBooks();
+      };
+    }
+
+    function readDescription() {
+      const text = document.querySelector('#modalContent p')?.innerText;
+      if (text) {
+        const speech = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(speech);
+      }
+    }
+
+    function downloadBookInfo(title, desc) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text(title, 10, 10);
+      doc.text(desc, 10, 20);
+      doc.save(`${title}.pdf`);
+    }
+
+    window.onload = () => {
+      document.getElementById('searchInput').value = 'bestsellers';
+      searchBooks();
+    };
+  </script>
+</body>
+</html>
