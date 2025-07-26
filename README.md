@@ -2,7 +2,7 @@
 
 [Visit the App](https://bookdetail.netlify.app/)
 
-## 🌟 Features
+## 🌟 Features.
 
 - **🔍 Book Search**: Easily search for your favorite books by title, author, or genre.
 - **📖 Book Details**: View detailed information about each book, including:
