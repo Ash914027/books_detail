@@ -14,34 +14,48 @@
       margin: 0;
       padding: 0;
     }
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
-    }
-    .header {
-      text-align: center;
-      color: white;
-    }
-    .search-container {
-      display: flex;
-      gap: 10px;
-      max-width: 600px;
-      margin: 20px auto;
-    }
-    .search-input, select {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-    }
-    .search-btn, .voice-btn, .dark-btn {
+    .container { max-width: 1200px; margin: auto; padding: 20px; }
+    .header { text-align: center; color: white; }
+    .dark-btn {
+      margin-top: 10px;
       padding: 10px 15px;
       border-radius: 10px;
       border: none;
       background: #ff6b6b;
       color: white;
       cursor: pointer;
+    }
+    .search-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    .search-input, select {
+      flex: 1 1 200px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      min-width: 180px;
+    }
+    .search-btn, .voice-btn {
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: none;
+      background: #ff6b6b;
+      color: white;
+      cursor: pointer;
+    }
+    select {
+      display: block;
+      margin: 10px auto 20px;
+      width: 200px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
     }
     .books-grid {
       display: grid;
@@ -54,62 +68,58 @@
       padding: 15px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 10px;
     }
-    .book-cover {
-      width: 100px;
-      height: 140px;
-      float: left;
-      margin-right: 10px;
-      object-fit: cover;
-    }
-    .book-info {
-      overflow: hidden;
-    }
-    .favorite {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 18px;
-      color: red;
-      cursor: pointer;
-    }
-    .dark-mode {
-      background: #121212;
-      color: #eee;
-    }
-    .dark-mode .book-card {
-      background: #1e1e1e;
-      color: #eee;
-    }
+    .book-cover { width: 100px; height: 140px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
+    .book-info { flex: 1; overflow: hidden; }
+    .book-info h3 { margin: 0 0 5px; font-size: 1.1rem; }
+    .book-info p { margin: 5px 0; font-size: 0.9rem; }
+    .favorite { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 18px; color: red; cursor: pointer; }
+    .dark-mode { background: #121212; color: #eee; }
+    .dark-mode .book-card { background: #1e1e1e; color: #eee; }
     .modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.8);
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      padding: 10px;
     }
     .modal-content {
       background: white;
       padding: 20px;
       border-radius: 10px;
-      width: 80%;
+      width: 90%;
       max-width: 600px;
       position: relative;
+      max-height: 80vh;
+      overflow-y: auto;
     }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
+    .close-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer; }
+
+    @media (max-width: 768px) {
+      .book-card { flex-direction: column; align-items: center; text-align: center; }
+      .book-cover { width: 120px; height: 160px; margin-bottom: 10px; }
+      .book-info h3 { font-size: 1rem; }
+      .search-container { flex-direction: column; }
+      .search-btn, .voice-btn, .dark-btn { width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .book-card { padding: 10px; }
+      .book-info p { font-size: 0.8rem; }
+      .search-input { width: 100%; }
+    }
+    #pagination button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      border-radius: 5px;
       border: none;
-      font-size: 20px;
       cursor: pointer;
     }
   </style>
@@ -121,18 +131,22 @@
       <p>Discover amazing books from around the world</p>
       <button class="dark-btn" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
     </div>
+
     <div class="search-container">
       <input type="text" id="searchInput" class="search-input" placeholder="Search books..." />
       <button class="search-btn" onclick="searchBooks()">🔍</button>
       <button class="voice-btn" onclick="startVoiceSearch()">🎤</button>
     </div>
+
     <select id="sortOption" onchange="sortBooks()">
       <option value="">Sort By</option>
       <option value="rating">Rating</option>
       <option value="pages">Pages</option>
-      <option value="date">Newest.</option>
+      <option value="date">Newest</option>
     </select>
+
     <div id="booksContainer" class="books-grid"></div>
+    <div id="pagination" style="text-align:center; margin:20px 0;"></div>
   </div>
 
   <div id="bookModal" class="modal" onclick="closeModal(event)">
@@ -145,6 +159,8 @@
     const API_KEY = 'AIzaSyD8vtLoFuIzGsU72pGpt7IHNym05H621bM';
     const BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
     let currentBooks = [];
+    let currentPage = 1;
+    const booksPerPage = 8;
 
     async function searchBooks() {
       const query = document.getElementById('searchInput').value.trim();
@@ -152,13 +168,18 @@
       const res = await fetch(`${BASE_URL}?q=${encodeURIComponent(query)}&maxResults=20&key=${API_KEY}`);
       const data = await res.json();
       currentBooks = data.items || [];
-      displayBooks(currentBooks);
+      currentPage = 1; // reset to first page on new search
+      displayBooks();
     }
 
-    function displayBooks(books) {
+    function displayBooks() {
       const container = document.getElementById('booksContainer');
       container.innerHTML = '';
-      books.forEach((book, index) => {
+      const start = (currentPage - 1) * booksPerPage;
+      const end = start + booksPerPage;
+      const visibleBooks = currentBooks.slice(start, end);
+
+      visibleBooks.forEach((book, index) => {
         const info = book.volumeInfo;
         const card = document.createElement('div');
         card.className = 'book-card';
@@ -174,9 +195,27 @@
             ${isFavorite(book.id) ? '❤️' : '🤍'}
           </button>
         `;
-        card.onclick = () => openModal(index);
+        card.onclick = () => openModal(start + index);
         container.appendChild(card);
       });
+
+      renderPagination();
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(currentBooks.length / booksPerPage);
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.style.background = i === currentPage ? '#ff6b6b' : '#ddd';
+        btn.onclick = () => {
+          currentPage = i;
+          displayBooks();
+        };
+        pagination.appendChild(btn);
+      }
     }
 
     function sortBooks() {
@@ -184,7 +223,7 @@
       if (opt === 'rating') currentBooks.sort((a, b) => (b.volumeInfo.averageRating || 0) - (a.volumeInfo.averageRating || 0));
       if (opt === 'pages') currentBooks.sort((a, b) => (b.volumeInfo.pageCount || 0) - (a.volumeInfo.pageCount || 0));
       if (opt === 'date') currentBooks.sort((a, b) => new Date(b.volumeInfo.publishedDate || 0) - new Date(a.volumeInfo.publishedDate || 0));
-      displayBooks(currentBooks);
+      displayBooks();
     }
 
     function toggleFavorite(id) {
@@ -192,7 +231,7 @@
       if (favs.includes(id)) favs = favs.filter(f => f !== id);
       else favs.push(id);
       localStorage.setItem('favorites', JSON.stringify(favs));
-      displayBooks(currentBooks);
+      displayBooks();
     }
 
     function isFavorite(id) {
@@ -202,7 +241,8 @@
 
     function openModal(index) {
       const info = currentBooks[index].volumeInfo;
-      document.getElementById('modalContent').innerHTML += `
+      document.getElementById('modalContent').innerHTML = `
+        <button class="close-btn" onclick="closeModal()">&times;</button>
         <h2>${info.title}</h2>
         <p><em>${info.authors?.join(', ')}</em></p>
         <p>${info.description}</p>
@@ -214,15 +254,10 @@
 
     function closeModal(e) {
       const modal = document.getElementById('bookModal');
-      if (!e || e.target === modal) {
-        modal.style.display = 'none';
-        document.getElementById('modalContent').innerHTML = '<button class="close-btn" onclick="closeModal()">&times;</button>';
-      }
+      if (!e || e.target === modal) modal.style.display = 'none';
     }
 
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-    }
+    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
     function startVoiceSearch() {
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -236,10 +271,7 @@
 
     function readDescription() {
       const text = document.querySelector('#modalContent p')?.innerText;
-      if (text) {
-        const speech = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(speech);
-      }
+      if (text) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
     }
 
     function downloadBookInfo(title, desc) {
