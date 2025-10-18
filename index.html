@@ -13,6 +13,7 @@
       color: #333;
       margin: 0;
       padding: 0;
+      transition: background 0.3s, color 0.3s;
     }
     .container { max-width: 1200px; margin: auto; padding: 20px; }
     .header { text-align: center; color: white; }
@@ -72,6 +73,12 @@
       flex-direction: row;
       align-items: flex-start;
       gap: 10px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .book-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.2);
     }
     .book-cover { width: 100px; height: 140px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
     .book-info { flex: 1; overflow: hidden; }
@@ -80,6 +87,8 @@
     .favorite { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 18px; color: red; cursor: pointer; }
     .dark-mode { background: #121212; color: #eee; }
     .dark-mode .book-card { background: #1e1e1e; color: #eee; }
+    .stars { color: gold; font-size: 1rem; }
+    .dark-mode .search-input, .dark-mode select, .dark-mode .search-btn, .dark-mode .voice-btn { background: #333; color: #eee; }
     .modal {
       display: none;
       position: fixed;
@@ -130,12 +139,14 @@
       <h1>📚 Book Explorer</h1>
       <p>Discover amazing books from around the world</p>
       <button class="dark-btn" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
+      <button class="dark-btn" onclick="viewFavorites()">❤️ View Favorites</button>
     </div>
 
     <div class="search-container">
       <input type="text" id="searchInput" class="search-input" placeholder="Search books..." />
       <button class="search-btn" onclick="searchBooks()">🔍</button>
       <button class="voice-btn" onclick="startVoiceSearch()">🎤</button>
+      
     </div>
 
     <select id="sortOption" onchange="sortBooks()">
@@ -281,6 +292,40 @@
       doc.text(desc, 10, 20);
       doc.save(`${title}.pdf`);
     }
+      function viewFavorites() {
+      const favs = JSON.parse(localStorage.getItem('favorites')) || [];
+      const favoriteBooks = currentBooks.filter(book => favs.includes(book.id));
+      if (favoriteBooks.length === 0) {
+        alert("No favorite books found!");
+        return;
+      }
+
+      const container = document.getElementById('booksContainer');
+      container.innerHTML = '';
+      favoriteBooks.forEach((book, index) => {
+        const info = book.volumeInfo;
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+          <img src="${info.imageLinks?.thumbnail || ''}" class="book-cover" />
+          <div class="book-info">
+            <h3>${info.title}</h3>
+            <p><em>${info.authors?.join(', ') || 'Unknown'}</em></p>
+            <p>${info.description?.substring(0, 100) || 'No description'}...</p>
+            <small>Rating: ${info.averageRating || 'N/A'}</small>
+          </div>
+          <button class="favorite" onclick="event.stopPropagation(); toggleFavorite('${book.id}')">
+            ❤️
+          </button>
+        `;
+        card.onclick = () => openModal(currentBooks.indexOf(book));
+        container.appendChild(card);
+      });
+
+      // Hide pagination when viewing favorites
+      document.getElementById('pagination').innerHTML = '';
+    }
+
 
     window.onload = () => {
       document.getElementById('searchInput').value = 'bestsellers';
