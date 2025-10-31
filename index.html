@@ -25,7 +25,12 @@
       background: #ff6b6b;
       color: white;
       cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
     }
+    .dark-btn:hover { transform: translateY(-2px) scale(1.03); background: #ff8787; }
+    .dark-btn:active { transform: translateY(0) scale(0.98); }
+    
+
     .search-container {
       display: flex;
       flex-wrap: wrap;
@@ -42,6 +47,13 @@
       border: none;
       min-width: 180px;
     }
+    .search-input {transition: all 0.3s ease;}
+
+    .search-input:focus {
+     box-shadow: 0 0 8px rgba(255, 107, 107, 0.7);
+      transform: scale(1.03);
+     outline: none;
+    } 
     .search-btn, .voice-btn {
       padding: 10px 15px;
       border-radius: 10px;
@@ -49,7 +61,16 @@
       background: #ff6b6b;
       color: white;
       cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
     }
+  .search-btn:hover, .voice-btn:hover {
+   transform: translateY(-3px) scale(1.05);
+   background: #ff8787;
+}
+  .search-btn:active, .voice-btn:active {
+   transform: translateY(0) scale(0.98);
+  }
+
     select {
       display: block;
       margin: 10px auto 20px;
@@ -63,6 +84,8 @@
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 20px;
     }
+
+
     .book-card {
       background: white;
       border-radius: 10px;
@@ -73,23 +96,37 @@
       flex-direction: row;
       align-items: flex-start;
       gap: 10px;
-      cursor: pointer;
+      cursor: pointer; padding-right: 40px;
       transition: transform 0.3s, box-shadow 0.3s;
     }
+    /* Hover effect on card 
+     - .book-card: lifts and adds subtle shadow on hover
+   - .book-cover: scales up with glow effect on hover*/
     .book-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-    }
-    .book-cover { width: 100px; height: 140px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
-    .book-info { flex: 1; overflow: hidden; }
+      transform: translateY(-8px) scale(1.08);
+      box-shadow:  0 0 15px rgba(0, 255, 200, 0.9),
+         0 0 40px rgba(0, 255, 200, 0.6),
+         0 0 60px rgba(0, 255, 200, 0.4);
+      transition: all 0.5s ease;
+      }
+   
+    .book-cover { width: 100px;
+       height: 140px; 
+       border-radius: 5px;
+       object-fit: cover;
+       flex-shrink: 0;
+       transition: transform 0.7s ease;
+         }
+     .book-cover:hover {transform: scale(1.07);}
+    .book-info { flex: 1; overflow: hidden; padding-right: 10px;}
     .book-info h3 { margin: 0 0 5px; font-size: 1.1rem; }
     .book-info p { margin: 5px 0; font-size: 0.9rem; }
-    .favorite { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 18px; color: red; cursor: pointer; }
+    .favorite { position: absolute; top: 10px; z-index: 2; right: 10px; background: none; border: none; font-size: 18px; color: red; cursor: pointer; }
     .dark-mode { background: #121212; color: #eee; }
     .dark-mode .book-card { background: #1e1e1e; color: #eee; }
     .stars { color: gold; font-size: 1rem; }
     .dark-mode .search-input, .dark-mode select, .dark-mode .search-btn, .dark-mode .voice-btn { background: #333; color: #eee; }
-    .modal {
+    /* .modal {
       display: none;
       position: fixed;
       top: 0; left: 0;
@@ -109,8 +146,98 @@
       position: relative;
       max-height: 80vh;
       overflow-y: auto;
-    }
-    .close-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer; }
+    } */
+     /* --------------------
+   Slide-up modal + backdrop blur
+   Works without JS changes (detects inline `style="display:flex"`)
+   -------------------- */
+
+/* base hidden state */
+#bookModal {
+  display: none;               
+  position: fixed;
+  inset: 0;
+  justify-content: center;
+  align-items: flex-end;       
+  z-index: 1000;
+  padding: 20px;
+  pointer-events: none;       }
+
+/* backdrop pseudo-element (no blur when hidden) */
+#bookModal::before { 
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  backdrop-filter: blur(0px);
+  transition: background 300ms ease, backdrop-filter 300ms ease;
+  z-index: 1000;
+}
+
+/* modal content initial (hidden / down) */
+#bookModal .modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  background: white;
+  color:#333;
+  border-radius: 12px 12px 8px 8px;
+  padding: 20px;
+  overflow-y: auto;
+  transform: translateY(30px);
+  opacity: 0;
+  transition: transform 360ms cubic-bezier(.2,.9,.3,1), opacity 300ms ease;
+  z-index: 1001;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  pointer-events: auto;
+}
+#bookModal .modal-content p,
+#bookModal .modal-content h2,
+#bookModal .modal-content small {
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+#bookModal .modal-content button {
+    background: #380268;
+    color: white;
+}
+.dark-mode #bookModal .modal-content button {
+    background: #380268;
+    color: white;
+}
+
+#bookModal[style*="display:flex"],
+#bookModal[style*="display: flex"] {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* backdrop visible: dim + blur */
+#bookModal[style*="display:flex"]::before,
+#bookModal[style*="display: flex"]::before {
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+}
+
+/* modal content visible: slide up & fade in */
+#bookModal[style*="display:flex"] .modal-content,
+#bookModal[style*="display: flex"] .modal-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* dark-mode tweak */
+.dark-mode #bookModal .modal-content {
+  background: #1e1e1e;
+  color: #eee;
+}
+
+#bookModal[style*="display:flex"] { cursor: default; }
+#bookModal[style*="display:flex"] .modal-content { cursor: auto; } 
+
+.close-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer; }
 
     @media (max-width: 768px) {
       .book-card { flex-direction: column; align-items: center; text-align: center; }
@@ -118,12 +245,23 @@
       .book-info h3 { font-size: 1rem; }
       .search-container { flex-direction: column; }
       .search-btn, .voice-btn, .dark-btn { width: 100%; }
+      #bookModal[style*="display:flex"] {align-items: center;}
+      .search-input:focus {transform: scale(1.02);box-shadow: 0 0 6px rgba(255, 107, 107, 0.6);}
+      .search-btn:hover, .voice-btn:hover {transform: translateY(-2px) scale(1.03);}
     }
+
     @media (max-width: 480px) {
       .book-card { padding: 10px; }
       .book-info p { font-size: 0.8rem; }
-      .search-input { width: 100%; }
+      .search-input { width: 100%; transform: scale(1.01);box-shadow: 0 0 4px rgba(255, 107, 107, 0.5); }
+      /* to ensure that the hover effect is responsive*/
+      .book-card {transition: transform 0.22s cubic-bezier(.2,.9,.3,1), box-shadow 0.22s ease;}
+      .book-cover {transition: transform 0.22s cubic-bezier(.2,.9,.3,1), box-shadow 0.22s ease;}
+      .book-cover:hover { transform: scale(1.05); box-shadow: 0 0 6px #fff; }
+      .book-card:hover { transform: translateY(-3px); }
+      .search-btn:hover, .voice-btn:hover {transform: translateY(-1px) scale(1.02);}
     }
+    
     #pagination button {
       margin: 0 5px;
       padding: 5px 10px;
@@ -412,4 +550,4 @@
 
 
 </body>
-</html>
+</html> 
